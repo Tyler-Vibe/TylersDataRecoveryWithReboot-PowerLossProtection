@@ -1,0 +1,165 @@
+﻿<Window x:Class="DataRecovery.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:DataRecovery.App"
+        mc:Ignorable="d"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        Title="Data Recovery - Deleted File &amp; Video Undelete Tool (x64)"
+        Height="820" Width="1280" MinHeight="650" MinWidth="1000"
+        WindowStartupLocation="CenterScreen">
+    <Window.DataContext>
+        <local:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="Data Recovery" FontSize="26" FontWeight="Bold"/>
+            <TextBlock Text="Raw signature-based deleted-file recovery - fast, multithreaded, resumable. Run as Administrator."
+                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Configuration card -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.1*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="1.1*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="1.4*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Source drive -->
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="SOURCE DRIVE (physical disk to scan)" Style="{StaticResource SectionHeaderStyle}"/>
+                    <ComboBox ItemsSource="{Binding Drives}" SelectedItem="{Binding SelectedDrive}"
+                              DisplayMemberPath="DisplayText" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"/>
+                    <Button Content="Refresh drive list" Command="{Binding RefreshDrivesCommand}" Margin="0,8,0,0" HorizontalAlignment="Left"
+                            IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"/>
+                    <TextBlock Text="Deleted/unallocated partitions won't show a drive letter - that's expected." TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
+                </StackPanel>
+
+                <!-- Output folder -->
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="OUTPUT FOLDER (must be a DIFFERENT physical drive)" Style="{StaticResource SectionHeaderStyle}"/>
+                    <TextBox Text="{Binding OutputFolder, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True"
+                             IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"/>
+                    <Button Content="Browse..." Command="{Binding BrowseOutputCommand}" Margin="0,8,0,0" HorizontalAlignment="Left"
+                            IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"/>
+                    <TextBlock Text="Recovered files and the resumable progress database are stored here." TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
+                </StackPanel>
+
+                <!-- File types -->
+                <StackPanel Grid.Column="4">
+                    <TextBlock Text="FILE TYPES TO RECOVER" Style="{StaticResource SectionHeaderStyle}"/>
+                    <ItemsControl ItemsSource="{Binding FileTypeOptions}" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" Width="230"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Progress + controls card -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <ProgressBar Value="{Binding PercentComplete}" Minimum="0" Maximum="100" Margin="0,0,0,10"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding ScannedText}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ThroughputText}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding FilesText}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </Grid>
+                    <TextBlock Text="{Binding EtaText, StringFormat='Estimated time remaining: {0}'}" Foreground="{StaticResource AccentBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                    <Button Content="Start / Resume" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartCommand}" Margin="0,0,10,0" MinWidth="130"/>
+                    <Button Content="{Binding PauseResumeLabel}" Command="{Binding PauseResumeCommand}" Margin="0,0,10,0" MinWidth="90"/>
+                    <Button Content="Stop" Style="{StaticResource DangerButtonStyle}" Command="{Binding StopCommand}" MinWidth="90"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Results + log -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="RECOVERED FILES" Style="{StaticResource SectionHeaderStyle}" Margin="15,15,15,6"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Results}" Margin="1,0,1,1">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="55"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding FileTypeId}" Width="100"/>
+                            <DataGridTextColumn Header="Size" Binding="{Binding SizeDisplay}" Width="90"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="90"/>
+                            <DataGridTextColumn Header="Exact" Binding="{Binding LengthIsExact}" Width="60"/>
+                            <DataGridTextColumn Header="Source Offset" Binding="{Binding OffsetDisplay}" Width="130"/>
+                            <DataGridTextColumn Header="Output Path" Binding="{Binding OutputPath}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="LOG" Style="{StaticResource SectionHeaderStyle}" Margin="15,15,15,6"/>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="10,0,10,10">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status bar -->
+        <TextBlock Grid.Row="4" Text="{Binding StatusText}" Margin="0,12,0,0" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+    </Grid>
+</Window>
