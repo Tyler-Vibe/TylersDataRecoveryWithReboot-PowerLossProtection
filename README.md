@@ -4,6 +4,14 @@ A Windows desktop app that recovers deleted or lost files from a physical drive 
 
 It is built for large drives (multi-terabyte), and a scan can be paused, stopped, and resumed later without starting over.
 
+## Multithreaded scanning
+
+The scan runs on several threads at once so that the drive, not the processor, sets the speed:
+
+- **One reader thread** reads the drive from start to finish in large sequential blocks. Reads are kept in order on purpose: many threads jumping around a hard drive would make it much slower, not faster.
+- **One search thread per CPU core** (at least 2) looks through those blocks in parallel for file signatures.
+- **Three writer threads** save recovered files to the output folder while the scan keeps going.
+
 ## Supported file types
 
 | Type | Default |
